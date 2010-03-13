@@ -1,0 +1,15 @@
+halreftest.jar:
+%  content halreftest %content/
+%  locale halreftest en-US %locale/en-US/
+%  skin halreftest classic/1.0 %skin/
+%  overlay chrome://browser/content/browser.xul chrome://halreftest/content/browser-overlay.xul
+       content/browser-overlay.js                 (content/browser-overlay.js)
+       content/browser-overlay.xul                (content/browser-overlay.xul)
+       content/test-driver.js                     (content/test-driver.js)
+       content/haltest.js                         (content/haltest.js)
+       content/haltest.xul                        (content/haltest.xul)
+       content/compare.html                       (content/compare.html)
+       content/important.png                      (content/important.png)
+       content/start-testing.html                 (content/start-testing.html)
+       locale/en-US/strings.dtd                   (locale/en-US/strings.dtd)
+       skin/style.css                             (skin/style.css)

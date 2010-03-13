@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE overlay SYSTEM "chrome://halreftest/locale/strings.dtd">
+<overlay id="haltest-browser-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script src="chrome://halreftest/content/browser-overlay.js"/>
+  <script type="application/javascript">
+
+    window.addEventListener("load", helperInit, false);
+    function helperInit()
+    {
+        var id = "halreftest@mozilla.org";
+        var cmdline = Components.classes["@mozilla.org/toolkit/command-line;1"]
+                                .createInstance(Components.interfaces.nsICommandLine);
+        var jsm = Components.classes["@mozilla.org/extensions/manager;1"]
+                            .getService(Components.interfaces.nsIExtensionManager)
+                            .getInstallLocation(id)
+                            .getItemFile(id, "modules/halreftest.jsm");
+        Components.utils.import(cmdline.resolveURI(jsm.path).spec);
+        HalReftestHelper.init();
+        window.removeEventListener("load", helperInit, false);
+    }
+
+  </script>
+  <menupopup id="menu_ToolsPopup">
+    <menuitem id="haltest-test-menuentry" label="&haltest-menu-entry-label;"
+              insertafter="devToolsSeparator" oncommand="onHaltestMenuCommand(event);"/>
+  </menupopup>
+</overlay>

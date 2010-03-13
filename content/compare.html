@@ -1,0 +1,69 @@
+<html class="compare">
+<head>
+  <title>Compare Test Results</title>
+  <link rel=StyleSheet href="../skin/style.css" type="text/css">
+  <script type="application/javascript">
+
+  var id = "halreftest@mozilla.org";
+  var cmdline = Components.classes["@mozilla.org/toolkit/command-line;1"]
+                .createInstance(Components.interfaces.nsICommandLine);
+  var jsm = Components.classes["@mozilla.org/extensions/manager;1"]
+                            .getService(Components.interfaces.nsIExtensionManager)
+                            .getInstallLocation(id)
+                            .getItemFile(id, "modules/halreftest.jsm");
+  Components.utils.import(cmdline.resolveURI(jsm.path).spec);
+  var testToVerify = HalReftestLogger._testToVerify;
+  
+  function setResult(result) {
+    HalReftestLogger._tests[testToVerify].userverified = result;
+    if (result == 1) {
+      HalReftestLogger._tests[testToVerify].status = "TEST-PASS";
+    }
+    window.close();
+  }
+  
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function positionElements() {
+    var desiredHeight = window.screen.availHeight - 100 < 1000 ? window.screen.availHeight - 100 : 1000;
+    $("body").style.height = desiredHeight;
+    var desiredWidth = window.screen.availWidth  - 50 < 1650 ? window.screen.availWidth - 50 : 1650;
+    $("body").style.width = desiredWidth;
+    if (desiredWidth < 1650) {
+      $("iframe1").style.width = (desiredWidth / 2) - 25;
+      $("iframe2").style.width = (desiredWidth / 2) - 25;
+      $("iframe1").style.height = 1000 * ((desiredWidth / 2) - 25) / 800;
+      $("iframe2").style.height = 1000 * ((desiredWidth / 2) - 25) / 800;
+    }
+    $("div1").style.width = desiredWidth - 50;
+    $("iframe1").src = HalReftestLogger._tests[testToVerify].testimage;
+    $("iframe2").src = HalReftestLogger._tests[testToVerify].refimage;
+  }
+  
+  </script>
+</head>
+
+<body class="compare" onload="positionElements()" id="body">
+
+  <div class="compare" id="div1">
+    <img src="important.png" alt="important" height="40px" style="float:left; padding-right: 10px;"/>
+    <div id="header">
+    Halreftest has detected that the two images below are rendered differently on your machine,
+    but the differences
+    may not be visible.  Please inspect the two images and tell us if there are any
+    visible differences.
+    </div>
+    <div class="center">
+    <button onclick="setResult(1); return false;">The images are visually identical</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="setResult(0); return false;">The images are visually different</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="setResult(-1); return false;">Stop testing, I'll run the test again later</button>
+    </div>
+  </div>
+  <iframe src="about:blank" class="compare" id="iframe1" height="1000" width="800"></iframe>
+  <iframe src="about:blank" class="compare" id="iframe2" height="1000" width="800"></iframe>
+
+</body>
+
+</html>

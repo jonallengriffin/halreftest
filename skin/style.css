@@ -1,0 +1,130 @@
+.container {
+  border: solid black;
+  width: 75%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+}
+
+body.compare, html.compare { margin: 0; padding: 0; background-color: lightgray;}
+
+div.compare { padding: 10px; margin: 0;
+font-family:"helvetica neue",arial,helvetica,sans-serif;font-size:1em;color:#235;font-weight:bold;}
+
+.center { text-align: center; }
+
+#header { padding-bottom: 12px; }
+
+.title {
+  text-align: center;
+}
+
+.warning {
+  color: red;
+}
+
+.section{overflow:hidden;padding:0 2%;margin:0 auto;max-width:90em;min-width:20em;position:relative;min-height:55em;
+min-height: 100%;}
+* html .section {height: 100%;}
+
+.boxsection {
+  border-width: 4px;
+  border-style: solid;
+  border-color: rgb(181,217,229);
+  -moz-border-radius: 5px;
+  margin-bottom: 2em;
+  clear: both;
+  font-family:"helvetica neue",arial,helvetica,sans-serif;
+}
+
+.boxinner {
+  background-color: rgb(255, 255, 255);
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(46,81,134);
+  -moz-border-radius: 3px;
+}
+
+.window {
+  background-color: transparent;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  position: relative;  
+  height: 300px;
+  padding: 0pt 30px 30px 30px;
+  display: block;
+}
+
+.windowhide {
+  display: none;
+}
+
+.liselected {
+  text-decoration: none;
+  font-weight: bold;
+  color: #235;
+}
+
+.liplain {
+  text-decoration: none;
+  font-weight: bold;
+  color: rgb(84,100,126);
+}
+
+.boxfooter {
+  background-image: url(https://addons.mozilla.org/img/amo2009/bg/listing-footer.gif);
+  background-position: left top;
+  background-repeat: repeat-x;
+  -moz-border-radius: 3px 3px 0px 0px;
+  overflow: hidden;
+}
+
+html.startpage {
+  background-image: url(http://mozcom-cdn.mozilla.net/img/tignish/home/feature-background-4.jpg);
+  background-position: top center;
+  background-repeat: no-repeat;
+  height: 100%;
+}
+
+body.startpage {
+margin:0 auto;color:#444;font-size:13px;line-height:1.538em;background-image:url(https://addons.mozilla.org/img/amo2009/bg/header-border.png);background-repeat:repeat-x;background-position:top left;
+min-width:780px; min-height:700px;
+height: 100%;
+}
+
+ol {
+  display: block;
+  list-style-type: none;
+  margin: 0pt 0pt 1.5pt 0pt;
+  padding: 0pt 45px 0pt 45px;
+  font-size: 1em;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: rgb(174,195,207);
+}
+
+li {
+  float: left;
+  margin: 0.5em 2.1em 0.5em 0pt;
+}
+
+#dontshow {
+  display: none;
+}
+
+#brand{position:absolute;top:4px;left:0;margin:0;}#brand a:link,#brand a:visited,#brand a:hover,#brand a:focus,#brand a:active{background-image:url(https://addons.mozilla.org/img/amo2009/tab-mozilla.png);background-position:top left;background-repeat:no-repeat;width:90px;height:31px;overflow:hidden;display:block;text-indent:-5000px;}
+
+#title{font-family:"helvetica neue",arial,helvetica,sans-serif;font-size:3.231em;color:#235;font-weight:bold;margin-top:1.2em;margin-bottom:.4em;line-height:.8;}
+#title em{font-family:georgia,serif;font-weight:normal;font-style:italic;font-size:0.9em;}
+#title img{vertical-align:middle;position:relative;top:-0.1em;}
+#title strong{color:#D64203;}
+
+#footer{font-family: verdana; padding-left: 60px; position: absolute; bottom: 0;}
+#footer a:link,#footer a:visited{color:#898378;text-decoration:none}
+#footer a:hover,#footer a:active{color:#69645c;text-decoration:underline}
+#footer #copyright{background:url(http://mozcom-cdn.mozilla.net/img/tignish/template/footer-logo.png) top left no-repeat;padding-left:60px}
+#footer #copyright p{font-size:85%}
+#footer #copyright img{opacity:0.6;}
+#footer #copyright a:hover img{opacity:1;}
+#footer #copyright a:link,#footer #copyright a:visited{font-weight:bold}
+#footer #copyright a:hover,#footer #copyright a:active{font-weight:bold;text-decoration:underline}

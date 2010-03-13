@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+
+<html class="startpage">
+  <head>
+    <title>HAL Testing</title>
+    <link rel=StyleSheet href="chrome://halreftest/skin/style.css" type="text/css">
+    <script type="application/javascript" src="test-driver.js"></script>
+    <script type="application/javascript">
+    function addlistener() {
+      document.getElementById("startbutton").addEventListener("click", function(event) { remoteReftestTestDriver.submitForm(event); }, false);
+    }
+    </script>
+  </head>
+  <body class="startpage" onload="addlistener();">
+
+  <div class="section">
+    <p id="title"><img alt="Firefox" src="https://addons.mozilla.org/img/amo2009/app-icons/firefox.png" /> 
+    <strong>Firefox</strong><br/>
+    <em>Hardware Acceleration & Layers Reftest</em></p>
+    <p id="brand"><a href="http://www.mozilla.com/en-US/" title="Mozilla" accesskey="1">Mozilla</a></p>
+
+    <div class="boxsection">
+      <div class="boxinner">
+        <div class="window" id="window1">
+          <h2>Help us make the web better!</h2>
+          Mozilla needs your help in testing new features which will make Firefox faster than ever:  
+          <a href="https://wiki.mozilla.org/Platform/GFX/HardwareAcceleration">hardware acceleration</a> and 
+          <a href="https://wiki.mozilla.org/Gecko:Layers">layers</a>.  We need
+          to test these features on a wide variety of hardware configurations in order to identify
+          any potential compatibility problems.<br/>
+          <br/>
+          How
+          can you help?  It's easy!  Just press the "Start" button below, and a new window will open which will
+          run a series of graphics tests.  You'll see various color and images flicker in the window.  When
+          the test is complete, the test window will close, and the test results will automatically be sent
+          to Mozilla.<br/>
+          <br/>
+          <input type="button" id="startbutton" value="Start!"/>
+        </div>
+        <div class="windowhide" id="window2">
+          <h2>Test console</h2>
+          <div id="log">
+            Test output will appear here while the test is running.
+          </div>
+        </div>
+        <div class="windowhide" id="window3">
+          <h2>Test results</h2>
+          <div id="results">
+            A summary of the test results will appear here when the test is finished.
+          </div>
+        </div>
+        <div class="windowhide" id="window4">
+          <h2>System Information</h2>
+          <p>
+            <strong>Display Vendor:</strong> <span id="DisplayVendor"></span>
+          </p>
+          <p>
+            <strong>Display Adapter:</strong> <span id="DisplayAdapter"></span>
+          </p>
+          <p>
+            <strong>Display Chipset:</strong> <span id="DisplayChipset"></span>
+          </p>
+          <p>
+            <strong>Display RAM:</strong> <span id="DisplayRAM"></span>
+          </p>
+          <p>
+            <strong>Display Drivers:</strong> <span id="DisplayDriver"></span>
+          </p>
+          <p>
+            <strong>Driver Version:</strong> <span id="DisplayDriverVersion"></span>
+          </p>
+          <p>
+            <strong>Display Settings:</strong> <span id="DisplaySettings"></span>
+          </p>
+        </div>
+        <div class="boxfooter">
+          <ol>
+            <li><a href="#window1" onclick="return displaydiv(this)" class="liselected">Instructions</a></li>
+            <li><a href="#window2" onclick="return displaydiv(this)" class="liplain">Test console</a></li>
+            <li><a href="#window3" onclick="return displaydiv(this)" class="liplain">Test results</a></li>
+            <li><a href="#window4" onclick="return displaydiv(this)" class="liplain">System info</a></li>
+          </ol>
+        </div>
+      </div>
+    
+     <div id="listen"></div>
+    <script>
+      var sysinfo = Components.classes["@mozilla.org/extensions/halreftest/service;1"]
+                              .getService(Components.interfaces.nsISystemInfo);
+      dump("-------sysinfo = " + sysinfo + "\n");
+      document.getElementById("DisplayVendor").innerHTML = (sysinfo.DisplayAdapter && sysinfo.DisplayAdapter.indexOf(" ") > 0 ? 
+          sysinfo.DisplayAdapter.substr(0, sysinfo.DisplayAdapter.indexOf(" ")) + " " : "") + "(" + sysinfo.DisplayVendorID + ")";
+      document.getElementById("DisplayAdapter").innerHTML = sysinfo.DisplayAdapter;      
+      document.getElementById("DisplayChipset").innerHTML = sysinfo.DisplayChipset;      
+      document.getElementById("DisplayRAM").innerHTML = sysinfo.DisplayRAM + " MB";
+      document.getElementById("DisplayDriver").innerHTML = sysinfo.DisplayDriver ? sysinfo.DisplayDriver : "N/A";
+      document.getElementById("DisplayDriverVersion").innerHTML = sysinfo.DisplayDriverVersion ?
+          sysinfo.DisplayDriverVersion + ", " + sysinfo.DisplayDriverDate : "N/A";      
+      document.getElementById("DisplaySettings").innerHTML = sysinfo.DisplayWidth + " x " +
+          sysinfo.DisplayHeight + " x " + sysinfo.DisplayColorDepth;      
+    </script>
+  </div>
+  <div id="footer">
+  <div id="copyright">
+
+    <p id="footer-links"><a href="http://www.mozilla.com/en-US/privacy-policy.html">Privacy Policy</a>
+    &nbsp;|&nbsp; 
+    <a href="http://www.mozilla.com/en-US/about/legal.html">Legal Notices</a> &nbsp;|&nbsp;
+    <a href="http://www.mozilla.com/en-US/legal/fraud-report/index.html">Report Trademark Abuse</a></p>
+    <p>Except where otherwise <a href="http://www.mozilla.com/en-US/about/legal.html#site">noted</a>, 
+    content on this site is licensed under the <br /><a href="http://creativecommons.org/licenses/by-sa/3.0/">
+    Creative Commons Attribution Share-Alike License v3.0</a> or any later version.</p>
+
+  </div>
+  </div>
+  </div>
+  </body>
+</html>
