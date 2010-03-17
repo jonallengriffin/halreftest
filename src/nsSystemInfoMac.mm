@@ -37,7 +37,8 @@
 #include "nsSystemInfoMac.h"
 #include "nsStringAPI.h"
 
-#import <IOKit/Graphics/IOFrameBufferShared.h>
+#import <Foundation/Foundation.h>
+#import <IOKit/IOKitLib.h>
 #import <Carbon/Carbon.h>
 
 typedef const void *CGSConnectionID;

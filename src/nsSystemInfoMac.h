@@ -35,8 +35,8 @@
  * ***** END LICENSE BLOCK ***** */
 
 #include "nsISystemInfo.h"
-#import <Foundation/Foundation.h>
-#import <IOKit/IOKitLib.h>
+
+typedef uint CGDirectDisplayID;
 
 class nsSystemInfo : public nsISystemInfo
 {
