@@ -204,7 +204,19 @@ NS_IMETHODIMP nsSystemInfo::GetDisplayAdapter(nsAString & aDisplayAdapter)
 /* readonly attribute DOMString DisplayChipset; */
 NS_IMETHODIMP nsSystemInfo::GetDisplayChipset(nsAString & aDisplayChipset)
 {
-  return GetKeyValue((char*)mDeviceKey.BeginReading() + 18, "HardwareInformation.ChipType", &aDisplayChipset, REG_BINARY);
+  nsCString deviceId(mDeviceID);
+  ToUpperCase(deviceId);
+  PRInt32 pos = deviceId.Find(NS_LITERAL_CSTRING("&DEV_"));
+  if (pos != -1) {
+    deviceId.Cut(0, pos + 5);
+  }
+  pos = deviceId.Find(NS_LITERAL_CSTRING("&"));
+  if (pos != -1) {
+    deviceId.Cut(pos, deviceId.Length());
+  }
+  aDisplayChipset.AssignLiteral("0x");
+  aDisplayChipset.AppendLiteral(deviceId.BeginReading());
+  return NS_OK;
 }
 
 /* readonly attribute DOMString DisplayRAM; */
