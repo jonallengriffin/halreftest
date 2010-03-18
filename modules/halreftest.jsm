@@ -182,13 +182,17 @@ var HalReftestLogger =
     testdata["settings"]["width"] = sysinfo.DisplayWidth;
     testdata["settings"]["colordepth"] = sysinfo.DisplayColorDepth;
 
-    var hh = CC["@mozilla.org/network/protocol;1?name=http"].
-                 getService(CI.nsIHttpProtocolHandler);
+    var hh = CC["@mozilla.org/network/protocol;1?name=http"]
+             .getService(CI.nsIHttpProtocolHandler);
     testdata["os"] = hh["oscpu"];
     var macpos = testdata["os"].indexOf("Mac OS");
     if (macpos > 0) {
       testdata["os"] = testdata["os"].substring(macpos);
     }
+    var xulAppInfo = CC["@mozilla.org/xre/app-info;1"]
+                     .getService(CI.nsIXULAppInfo);
+    testdata["builddate"] = xulAppInfo.appBuildID.substr(0,8);
+    testdata["buildver"] = xulAppInfo.version;
     
     var request = CC["@mozilla.org/xmlextras/xmlhttprequest;1"].
                   createInstance(CI.nsIXMLHttpRequest);
