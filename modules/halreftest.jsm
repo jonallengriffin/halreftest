@@ -185,6 +185,10 @@ var HalReftestLogger =
     var hh = CC["@mozilla.org/network/protocol;1?name=http"].
                  getService(CI.nsIHttpProtocolHandler);
     testdata["os"] = hh["oscpu"];
+    var macpos = testdata["os"].indexOf("Mac OS");
+    if (macpos > 0) {
+      testdata["os"] = testdata["os"].substring(macpos);
+    }
     
     var request = CC["@mozilla.org/xmlextras/xmlhttprequest;1"].
                   createInstance(CI.nsIXMLHttpRequest);
