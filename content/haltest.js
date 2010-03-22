@@ -57,9 +57,14 @@ const EXTENSION_START_URL =
       "chrome://halreftest/content/start-testing.html";
 
 var gLoadTimeout = 0;
+var gOriginalDirectWrite;
+var gOriginalRenderMode;
 
 // "<!--CLEAR-->"
 const BLANK_URL_FOR_CLEARING = "data:text/html,%3C%21%2D%2DCLEAR%2D%2D%3E";
+
+// url's that begin with this prefix will be loaded with hardware acceleration enabled
+const hwaccel_prefix = "hwaccelerated_";
 
 var gBrowser;
 var gCanvas1, gCanvas2;
@@ -214,13 +219,25 @@ function OnRefTestLoad()
     gBrowser = document.getElementById("browser");
 
     /* set the gLoadTimeout */
+    var prefs = CC["@mozilla.org/preferences-service;1"].
+                getService(CI.nsIPrefBranch2);
     try {
-      var prefs = CC["@mozilla.org/preferences-service;1"].
-                  getService(CI.nsIPrefBranch2);
       gLoadTimeout = prefs.getIntPref("reftest.timeout");
     }                  
     catch(e) {
       gLoadTimeout = 1 * 60 * 1000; //1 minute
+    }
+    try {
+      gOriginalDirectWrite = prefs.getBoolPref("gfx.font_rendering.directwrite.enabled");
+    }
+    catch(e) {
+      gOriginalDirectWrite = false;
+    }
+    try {
+      gOriginalRenderMode = prefs.getIntPref("mozilla.widget.render-mode");
+    }
+    catch(e) {
+      gOriginalRenderMode = -1;
     }
 
     gBrowser.addEventListener("load", OnDocumentLoad, true);
@@ -380,6 +397,7 @@ function ReadManifest(manifestURL)
     var lineNo = 0;
     for each (var str in lines) {
         ++lineNo;
+        var testname = "";
         if (str.charAt(0) == "#")
             continue; // entire line was a comment
         var i = str.search(/\s+#/);
@@ -396,6 +414,7 @@ function ReadManifest(manifestURL)
         var maxAsserts = 0;
         while (items[0].match(/^(fails|random|skip|asserts)/)) {
             var item = items.shift();
+            testname += item + " ";
             var stat;
             var cond;
             var m = item.match(/^(fails|random|skip)-if(\(.*\))$/);
@@ -444,16 +463,18 @@ function ReadManifest(manifestURL)
             runHttp = true;
             httpDepth = 0;
             items.shift();
+            testname += "HTTP ";
         } else if (items[0].match(/HTTP\(\.\.(\/\.\.)*\)/)) {
             // Accept HTTP(..), HTTP(../..), HTTP(../../..), etc.
             runHttp = true;
             httpDepth = ((items[0].length - 5) / 3) - 1;
+            testname += items[0] + " ";
             items.shift();
         }
 
         if (runHttp) {
           // We are skipping http tests, if any, since we don't want to open
-          // up listen ports arbitrarily on end users machines.
+          // up listen ports arbitrarily on end users' machines.
         }
         else if (items[0] == "include") {
             // For 'include' lines, increment the total manifest count, 
@@ -470,6 +491,7 @@ function ReadManifest(manifestURL)
             }
             doReadManifest(incURI);
         } else if (items[0] == "load") {
+            testname += "load " + item[1];
             if (expected_status == EXPECTED_PASS)
                 expected_status = EXPECTED_LOAD;
             if (items.length != 2 ||
@@ -485,8 +507,9 @@ function ReadManifest(manifestURL)
                           maxAsserts: maxAsserts,
                           url1: testURI,
                           url2: null,
-                          testname: str } );
+                          testname: testname } );
         } else if (items[0] == "==" || items[0] == "!=") {
+            testname += items[0] + " ";
             if (items.length != 3)
                 throw "Error in manifest file " + manifestURL.spec + " line " + lineNo;
             var [testURI, refURI] = 
@@ -496,13 +519,38 @@ function ReadManifest(manifestURL)
                                 CI.nsIScriptSecurityManager.DISALLOW_SCRIPT);
             secMan.checkLoadURI(manifestURL, refURI,
                                 CI.nsIScriptSecurityManager.DISALLOW_SCRIPT);
-            gURLs.push( { equal: (items[0] == "=="),
-                          expected: expected_status,
-                          minAsserts: minAsserts,
-                          maxAsserts: maxAsserts,
-                          url1: testURI,
-                          url2: refURI,
-                          testname: str } );
+            if (window.navigator.platform.indexOf("Win") != -1) {
+              gURLs.push( { equal: (items[0] == "=="),
+                            expected: expected_status,
+                            minAsserts: minAsserts,
+                            maxAsserts: maxAsserts,
+                            url1: testURI,
+                            url1Accelerated: true,
+                            url2: refURI,
+                            url2Accelerated: true,
+                            testname: testname + items[1] + "[accelerated] " + items[2] + "[accelerated]" } );
+              gURLs.push( { equal: (items[0] == "=="),
+                            expected: EXPECTED_PASS,
+                            minAsserts: minAsserts,
+                            maxAsserts: maxAsserts,
+                            url1: testURI,
+                            url1Accelerated: true,
+                            url2: testURI,
+                            url2Accelerated: false,
+                            testname: testname + items[1] + "[accelerated] " + items[1] } );
+            }
+            else {
+              testname += items[1] + " " + items[2];
+              gURLs.push( { equal: (items[0] == "=="),
+                            expected: expected_status,
+                            minAsserts: minAsserts,
+                            maxAsserts: maxAsserts,
+                            url1: testURI,
+                            url1Accelerated: false,
+                            url2: refURI,
+                            url2Accelerated: false,
+                            testname: testname } );
+            }
         } else {
             throw "Error in manifest file " + manifestURL.spec + " line " + lineNo;
         }
@@ -585,6 +633,20 @@ function StartCurrentURI(aState)
     gState = aState;
     gCurrentURL = gURLs[0]["url" + aState].spec;
 
+
+    if (window.navigator.platform.indexOf("Win") != -1) {
+      var prefs = CC["@mozilla.org/preferences-service;1"].
+                  getService(CI.nsIPrefBranch2);
+      if (gURLs[0]["url" + aState + "Accelerated"]) {
+        prefs.setBoolPref("gfx.font_rendering.directwrite.enabled", true);
+        prefs.setIntPref("mozilla.widget.render-mode", 6); 
+      }
+      else {
+        prefs.setBoolPref("gfx.font_rendering.directwrite.enabled", false);
+        prefs.setIntPref("mozilla.widget.render-mode", -1); 
+      }
+    }
+
     if (gURICanvases[gCurrentURL] && gURLs[0].expected != EXPECTED_LOAD &&
         gURLs[0].maxAsserts == 0) {
         // Pretend the document loaded --- DocumentLoaded will notice
@@ -631,7 +693,12 @@ function DoneTests()
         gTestResults.TestsComplete = true;
         SendTestResults();
         gBrowser.contentWindow.close();
-        //goQuitApplication();
+        if (window.navigator.platform.indexOf("Win") != -1) {
+          var prefs = CC["@mozilla.org/preferences-service;1"].
+                      getService(CI.nsIPrefBranch2);
+          prefs.setBoolPref("gfx.font_rendering.directwrite.enabled", gOriginalDirectWrite);
+          prefs.setIntPref("mozilla.widget.render-mode", gOriginalRenderMode); 
+        }
     }
     
     HalReftestLogger.close();

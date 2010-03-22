@@ -155,7 +155,6 @@ var remoteReftestTestDriver = {
 
   },
   submitForm: function gtd_submit(evt) {
-    dump("---------   " + evt.screenX + "\n");
     // Prevent a new test from starting while one is already running.
     if (gIsTesting)
       return;
