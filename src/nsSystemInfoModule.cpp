@@ -45,9 +45,12 @@
 #include "nsSystemInfoWin.h"
 #elif defined(XP_MACOSX)
 #include "nsSystemInfoMac.h"
+#elif defined(XP_UNIX)
+#include "nsSystemInfoLinux.h"
 #else
 #include "nsSystemInfo.h"
 #endif
+
 #include "nsSystemInfoModule.h"
 	
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsSystemInfo, Init)

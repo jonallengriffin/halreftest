@@ -96,7 +96,8 @@
       document.getElementById("DisplayRAM").innerHTML = sysinfo.DisplayRAM + " MB";
       document.getElementById("DisplayDriver").innerHTML = sysinfo.DisplayDriver ? sysinfo.DisplayDriver : "N/A";
       document.getElementById("DisplayDriverVersion").innerHTML = sysinfo.DisplayDriverVersion ?
-          sysinfo.DisplayDriverVersion + ", " + sysinfo.DisplayDriverDate : "N/A";      
+          sysinfo.DisplayDriverVersion + 
+          (sysinfo.DisplayDriverDate ? ", " + sysinfo.DisplayDriverDate : "") : "N/A";      
       document.getElementById("DisplaySettings").innerHTML = sysinfo.DisplayWidth + " x " +
           sysinfo.DisplayHeight + " x " + sysinfo.DisplayColorDepth;      
     </script>
