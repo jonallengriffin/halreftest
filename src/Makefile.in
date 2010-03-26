@@ -86,7 +86,7 @@ EXTRA_DSO_LDOPTS += \
 else
 ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
 EXTRA_DSO_LDOPTS +=  \
-    /usr/lib/libpci.a \
+    -lpci \
     -lX11
 endif #gtk2
 endif #mac
