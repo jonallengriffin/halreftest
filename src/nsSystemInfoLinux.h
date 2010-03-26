@@ -45,6 +45,7 @@ public:
 
   nsSystemInfo();
   nsresult Init();
+  void Log(const char* msg);
 
 private:
   ~nsSystemInfo();

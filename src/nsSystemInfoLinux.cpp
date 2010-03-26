@@ -19,6 +19,7 @@
  *
  * Contributor(s):
  *   Jonathan Griffin <jgriffin@mozilla.com>
+ *   Vladimir Vukicevic <vladimir@pobox.com> (GLXWrap code)
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,13 +36,62 @@
  * ***** END LICENSE BLOCK ***** */
 
 #include "nsSystemInfoLinux.h"
+#include "glwrap.h"
 
 extern "C" {
 #include <pci/pci.h>
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <GL/glx.h>
 }
+
+#include "nsServiceManagerUtils.h"
+#include "nsIConsoleService.h"
+
+class GLXWrap : public LibrarySymbolLoader
+{
+public:
+  GLXWrap() { }
+
+  bool Init();
+
+protected:
+
+  //
+  // the wrapped functions
+  //
+public:
+  typedef PRFuncPtr (* PFNGLXGETPROCADDRESS) (const GLubyte *procName);
+  PFNGLXGETPROCADDRESS fGetProcAddress;
+  typedef GLXContext (* PFNGLXCREATECONTEXTPROC) (Display *dpy, XVisualInfo *visinfo, GLXContext share_list, Bool direct);
+  PFNGLXCREATECONTEXTPROC fCreateContext;
+  typedef void (* PFNGLXDESTROYCONTEXTPROC) (Display *dpy, GLXContext ctx);
+  PFNGLXDESTROYCONTEXTPROC fDestroyContext;
+  typedef const char* (* PFNGLGETSTRING) (int name);
+  PFNGLGETSTRING fGetString;
+  typedef Bool (* PFNGLXMAKECURRENT) (Display *dpy, GLXDrawable drawable, GLXContext ctx);
+  PFNGLXMAKECURRENT fMakeCurrent;
+};
+
+bool
+GLXWrap::Init()
+{
+  if (fCreateContext)
+    return true;
+
+  SymLoadStruct symbols[] = {
+    { (PRFuncPtr*) &fGetProcAddress, { "glXGetProcAddress", "glXGetProcAddressARB", NULL } },
+    { (PRFuncPtr*) &fCreateContext, { "glXCreateContext", NULL } },
+    { (PRFuncPtr*) &fDestroyContext, { "glXDestroyContext", NULL } },
+    { (PRFuncPtr*) &fGetString, { "glGetString", NULL } },
+    { (PRFuncPtr*) &fMakeCurrent, { "glXMakeCurrent", NULL } },
+    { NULL, { NULL } }
+  };
+
+  return LoadSymbols(&symbols[0]);
+}
+
+static GLXWrap gGLXWrap;
+
 
 NS_IMPL_ISUPPORTS1(nsSystemInfo, nsISystemInfo)
 
@@ -51,6 +101,12 @@ nsSystemInfo::nsSystemInfo()
 
 nsSystemInfo::~nsSystemInfo()
 {
+}
+
+void nsSystemInfo::Log(const char* msg) 
+{
+  nsCOMPtr<nsIConsoleService> console = do_GetService("@mozilla.org/consoleservice;1");
+  console->LogStringMessage(NS_ConvertASCIItoUTF16(msg).get());
 }
 
 nsresult nsSystemInfo::Init() 
@@ -78,10 +134,12 @@ nsresult nsSystemInfo::Init()
   
   pci_scan_bus(pacc);
   for (p = pacc->devices; p; p=p->next) {
-    pci_fill_info(p, PCI_FILL_IDENT | PCI_FILL_CLASS | PCI_FILL_BASES | PCI_FILL_SIZES);
+    pci_fill_info(p, 
+        PCI_FILL_IDENT | PCI_FILL_CLASS | PCI_FILL_BASES | PCI_FILL_SIZES);
     if (p->device_class == PCI_CLASS_DISPLAY_VGA) {
       pci_lookup_name(pacc, buf, sizeof(buf), 
-                      PCI_LOOKUP_VENDOR | PCI_LOOKUP_DEVICE, p->vendor_id, p->device_id);
+                      PCI_LOOKUP_VENDOR | PCI_LOOKUP_DEVICE, 
+                      p->vendor_id, p->device_id);
       mDeviceName.AssignLiteral(buf);
       sprintf(buf, "0x%04X", p->vendor_id);
       mVendorID.AssignLiteral(buf);
@@ -93,6 +151,9 @@ nsresult nsSystemInfo::Init()
       }
       vram = ram / 1024 / 1024;
     }
+    else {
+      Log("Grafx Bot: No PCI VGA device found");
+    }
   }
 
   pci_cleanup(pacc);
@@ -101,12 +162,12 @@ nsresult nsSystemInfo::Init()
     if (display[0] != ':') {
       display = strchr(display, ':');
       if (NULL == display) {
-        // remote display, abort
+        Log("Grafx Bot: unable to find display");
         return NS_OK;      
       }
     }
     if (NULL == (dpy = XOpenDisplay(display))) {
-      // no X-Windows display
+      Log("Grafx Bot: unable to find X display");
       return NS_OK;
     }
     root = DefaultRootWindow(dpy);
@@ -126,7 +187,7 @@ nsresult nsSystemInfo::Init()
         v = i;
     }
     if (-1 == v) {
-      // can't find a visual, abort
+      Log("Grafx Bot: can't find visual");
       return NS_OK;
     }
 
@@ -136,28 +197,37 @@ nsresult nsSystemInfo::Init()
         mDepth = pf[i].depth;
       }
     }
-
-    attr.background_pixel = 0;
-    attr.border_pixel = 0;
-    attr.colormap  = XCreateColormap(dpy, root, info[v].visual, AllocNone);
-    attr.event_mask = StructureNotifyMask | ExposureMask;
-    win = XCreateWindow(dpy, root, 0, 0, 100, 100, 0, info[v].depth, InputOutput, info[v].visual,
-      CWBackPixel | CWBorderPixel | CWColormap | CWEventMask, &attr);
-    GLXContext ctx = glXCreateContext(dpy, info, NULL, true);
-    if (ctx) {
-      if (glXMakeCurrent(dpy, win, ctx)) {
-        printf("------------------%s\n", glGetString(GL_RENDERER));
-        printf("------------------%s\n", glGetString(GL_VENDOR));
-        printf("------------------%s\n", glGetString(GL_VERSION));
-        mDriverVersion.AssignLiteral((char*)glGetString(GL_VERSION));
-        mDriver.AssignLiteral((char*)glGetString(GL_RENDERER));
-        mDriver.AppendLiteral(" (");
-        mDriver.AppendLiteral((char*)glGetString(GL_VENDOR));
-        mDriver.AppendLiteral(")");
+    
+    if (gGLXWrap.OpenLibrary("libGL.so.1") && gGLXWrap.Init()) {
+      attr.background_pixel = 0;
+      attr.border_pixel = 0;
+      attr.colormap  = XCreateColormap(dpy, root, info[v].visual, AllocNone);
+      attr.event_mask = StructureNotifyMask | ExposureMask;
+      win = XCreateWindow(dpy, root, 0, 0, 100, 100, 0, info[v].depth, 
+        InputOutput, info[v].visual,
+        CWBackPixel | CWBorderPixel | CWColormap | CWEventMask, &attr);
+      GLXContext ctx = gGLXWrap.fCreateContext(dpy, info, NULL, true);
+      if (ctx) { 
+        if (gGLXWrap.fMakeCurrent(dpy, win, ctx)) {
+          mDriverVersion.AssignLiteral((char*)gGLXWrap.fGetString(LOCAL_GL_VERSION));
+          mDriver.AssignLiteral((char*)gGLXWrap.fGetString(LOCAL_GL_RENDERER));
+          mDriver.AppendLiteral(" (");
+          mDriver.AppendLiteral((char*)gGLXWrap.fGetString(LOCAL_GL_VENDOR));
+          mDriver.AppendLiteral(")");
+        } 
+        else {
+          Log("Grafx Bot: unable to make current");
+        }
+        gGLXWrap.fDestroyContext(dpy, ctx);
       }
-      glXDestroyContext(dpy, ctx);
+      else {
+        Log("Grafx Bot: unable to create context");
+      }
+      XDestroyWindow(dpy, win);
     }
-    XDestroyWindow(dpy, win);
+    else {
+      Log("Grafx Bot: can't init libGL.so.1");
+    }
   }
 
   return NS_OK;

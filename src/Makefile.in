@@ -64,7 +64,8 @@ ifeq ($(MOZ_WIDGET_TOOLKIT),windows)
 CPPSRCS	  += nsSystemInfoWin.cpp
 else
 ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
-CPPSRCS   += nsSystemInfoLinux.cpp
+CPPSRCS   += nsSystemInfoLinux.cpp \
+             glwrap.cpp
 else
 CPPSRCS   += nsSystemInfo.cpp
 endif # gtk2
@@ -86,11 +87,7 @@ else
 ifeq ($(MOZ_WIDGET_TOOLKIT),gtk2)
 EXTRA_DSO_LDOPTS +=  \
     /usr/lib/libpci.a \
-    -lresolv \
-    /usr/lib/libGL.a \
-    -lX11 \
-    -lXext \
-    -lz
+    -lX11
 endif #gtk2
 endif #mac
 
