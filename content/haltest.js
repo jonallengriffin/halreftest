@@ -703,7 +703,7 @@ function DoneTests()
     
     HalReftestLogger.close();
     onStopped();
-    HalReftestLogger.postToServer();
+    HalReftestLogger.postToServer(false, 0);
 }
 
 function setupZoom(contentRootElement) {

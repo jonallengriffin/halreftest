@@ -88,7 +88,6 @@
     <script>
       var sysinfo = Components.classes["@mozilla.org/extensions/halreftest/service;1"]
                               .getService(Components.interfaces.nsISystemInfo);
-      dump("-------sysinfo = " + sysinfo + "\n");
       document.getElementById("DisplayVendor").innerHTML = (sysinfo.DisplayAdapter && sysinfo.DisplayAdapter.indexOf(" ") > 0 ? 
           sysinfo.DisplayAdapter.substr(0, sysinfo.DisplayAdapter.indexOf(" ")) + " " : "") + "(" + sysinfo.DisplayVendorID + ")";
       document.getElementById("DisplayAdapter").innerHTML = sysinfo.DisplayAdapter;      

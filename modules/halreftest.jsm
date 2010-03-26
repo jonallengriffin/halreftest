@@ -61,6 +61,7 @@ var HalReftestLogger =
   _tests: null,
   _testToVerify: -1,
   _prevTestToVerify: -1,
+  _timer: null,
   initFile: function() {
     var installRdfFile = CC["@mozilla.org/extensions/manager;1"]
                            .getService(CI.nsIExtensionManager)
@@ -102,6 +103,9 @@ var HalReftestLogger =
     }
   },
   openForRead: function () {
+    if (!HalReftestLogger._file) {
+      HalReftestLogger.initFile();
+    }
     if (!HalReftestLogger._file.exists()) return false;
     var fiStream = CC["@mozilla.org/network/file-input-stream;1"]
                       .createInstance(CI.nsIFileInputStream);
@@ -128,14 +132,15 @@ var HalReftestLogger =
         var wwatch = CC["@mozilla.org/embedcomp/window-watcher;1"]
                         .getService(CI.nsIWindowWatcher);
         wwatch.unregisterNotification(HalReftestLogger.WindowObserver);
-        
-        var testwindow = HalReftestHelper.GetBrowserByUrl(startURL);
-        if (!testwindow) return; // the user closed the main window, so we won't continue
-        testwindow.contentWindow.setTimeout(HalReftestLogger.lookForFailures, 0);
+
+        var event = { notify: function(timer) { HalReftestLogger.lookForFailures(); } }
+        HalReftestLogger._timer = CC["@mozilla.org/timer;1"].createInstance(CI.nsITimer);
+        HalReftestLogger._timer.initWithCallback(event, 100, CI.nsITimer.TYPE_ONE_SHOT);
       }
     }
   },
   lookForFailures: function() {
+    HalReftestLogger._timer = null;
     HalReftestLogger._prevTestToVerify = HalReftestLogger._testToVerify;
     for (var i = 0; i < HalReftestLogger._tests.length; i++) {
       if (typeof(HalReftestLogger._tests[i].userverified) != "undefined" && 
@@ -206,7 +211,7 @@ var HalReftestLogger =
     request.onload  = function(event) { self.onXMLUpdate(event);  };
     request.send(JSON.stringify(testdata));
   },
-  postToServer: function(req) {
+  postToServer: function(crashed, crashID) {
     var line;
     HalReftestLogger._tests = new Array();
     HalReftestLogger._testToVerify = -1;
@@ -240,6 +245,11 @@ var HalReftestLogger =
         HalReftestLogger._tests[HalReftestLogger._tests.length - 1].differingpixels = 
             line.substring(line.indexOf(reftestPixels) + reftestPixels.length);
       }
+    }
+    
+    if (typeof(HalReftestLogger._tests[HalReftestLogger._tests.length - 1].status) == "undefined" && crashed) {
+      HalReftestLogger._tests[HalReftestLogger._tests.length - 1].status = "TEST-CRASH";
+      HalReftestLogger._tests[HalReftestLogger._tests.length - 1].crashid = crashID;
     }
     
     for each (test in HalReftestLogger._tests) {
@@ -292,12 +302,19 @@ var HalReftestHelper =
     catch (e) {}
     if (!testInProgress) return;
     
-    var lastCrashPref = prefService.getIntPref("haltest.lastCrash");
+    try {
+      var lastCrashPref = prefService.getIntPref("haltest.lastCrash");
+    }
+    catch (e) {
+      var lastCrashPref = 1;
+    }
     var lastCrash = HalReftestHelper.getLastCrash();
     if (lastCrashPref != lastCrash.lastCrashTime) {
       dump("--------------------new crash since test was run, id=" + lastCrash.lastCrashId + "\n");
+      HalReftestLogger.postToServer(true, lastCrash.lastCrashId);
     }
     else {
+      HalReftestLogger.postToServer(true, 0);
       dump("--------------------looks like we crashed, but no new crash found\n");
     }
     
@@ -336,27 +353,5 @@ var HalReftestHelper =
   {
     var lastCrash = HalReftestHelper.getLastCrash();
     prefService.setIntPref("haltest.lastCrash", lastCrash.lastCrashTime);
-  },
-  GetBrowserByUrl : function(url) {
-    var wm = CC["@mozilla.org/appshell/window-mediator;1"]
-                .getService(CI.nsIWindowMediator);
-    var browserEnumerator = wm.getEnumerator("navigator:browser");
-
-    // Check each browser instance for our URL
-    while (browserEnumerator.hasMoreElements()) {
-      var browserWin = browserEnumerator.getNext();
-      var tabbrowser = browserWin.getBrowser();
-
-      // Check each tab of this browser instance
-      var numTabs = tabbrowser.browsers.length;
-      for(var index=0; index<numTabs; index++) {
-        var currentBrowser = tabbrowser.getBrowserAtIndex(index);
-        var rect = currentBrowser.boxObject;
-        if (url == currentBrowser.currentURI.spec) {
-          return currentBrowser;
-        }
-      }
-    }
-    return false;
   },
 };
